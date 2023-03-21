@@ -6,18 +6,20 @@
 trigger:
 - master
 
+pool: mypool
+
 variables:
   # Azure Resource Manager connection created during pipeline creation
-  azureServiceConnectionId: '579a3a70-2858-4412-9f1a-c61714d22d5d'
-  
+#  azureServiceConnectionId: '579a3a70-2858-4412-9f1a-c61714d22d5d'
+  azureServiceConnectionId: 'my-connection'  
   # Web app name
-  webAppName: 'flask-ml-service-6'
+  webAppName: 'flask-66'
 
   # Agent VM image name
-  vmImageName: 'ubuntu-latest'
+#  vmImageName: 'ubuntu-latest'
 
   # Environment name
-  environmentName: 'flask-ml-service-6'
+  environmentName: 'flask-66'
 
   # Project root folder. Point to the folder containing manage.py file.
   projectRoot: $(System.DefaultWorkingDirectory)
@@ -30,8 +32,8 @@ stages:
   displayName: Build stage
   jobs:
   - job: BuildJob
-    pool:
-      vmImage: $(vmImageName)
+    pool: mypool
+#      vmImage: $(vmImageName)
     steps:
     - task: UsePythonVersion@0
       inputs:
@@ -46,6 +48,14 @@ stages:
         pip install -r requirements.txt
       workingDirectory: $(projectRoot)
       displayName: "Install requirements"
+
+    - script: |
+        python -m venv antenv
+        source antenv/bin/activate
+        make install
+        make lint
+      workingDirectory: $(projectRoot)
+      displayName: 'Run lint tests'
 
     - task: ArchiveFiles@2
       displayName: 'Archive files'
@@ -66,8 +76,8 @@ stages:
   condition: succeeded()
   jobs:
   - deployment: DeploymentJob
-    pool:
-      vmImage: $(vmImageName)
+    pool: mypool
+#      vmImage: $(vmImageName)
     environment: $(environmentName)
     strategy:
       runOnce:
@@ -80,7 +90,7 @@ stages:
             displayName: 'Use Python version'
 
           - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App : flask-ml-service-6'
+            displayName: 'Deploy Azure Web App : flask-66'
             inputs:
               azureSubscription: $(azureServiceConnectionId)
               appName: $(webAppName)
